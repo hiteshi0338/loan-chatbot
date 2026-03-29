@@ -1,0 +1,996 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Loan Eligibility Advisor</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #1a1a2e;
+      color: #f0f0f0;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── HEADER ── */
+    header {
+      background: linear-gradient(90deg, #2c2c3e, #1a1a2e);
+      border-bottom: 2px solid #c9a84c;
+      padding: 16px 32px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    header .logo {
+      width: 42px;
+      height: 42px;
+      background: #c9a84c;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+    }
+
+    header h1 {
+      font-size: 22px;
+      color: #c9a84c;
+      letter-spacing: 1px;
+    }
+
+    header p {
+      font-size: 12px;
+      color: #aaa;
+      margin-top: 2px;
+    }
+
+    /* ── MAIN LAYOUT ── */
+    .main {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    /* ── LEFT PANEL — FORM ── */
+    .form-panel {
+      width: 340px;
+      background: #2c2c3e;
+      border-right: 2px solid #c9a84c33;
+      padding: 28px 24px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .form-panel h2 {
+      font-size: 15px;
+      color: #c9a84c;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      border-bottom: 1px solid #c9a84c44;
+      padding-bottom: 10px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .form-group label {
+      font-size: 12px;
+      color: #aaa;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .form-group input, .form-group select {
+      background: #1a1a2e;
+      border: 1px solid #c9a84c55;
+      border-radius: 8px;
+      padding: 10px 14px;
+      color: #f0f0f0;
+      font-size: 14px;
+      outline: none;
+      transition: border 0.2s;
+    }
+
+    .form-group input:focus, .form-group select:focus {
+      border-color: #c9a84c;
+    }
+
+    .form-group select option {
+      background: #2c2c3e;
+    }
+
+    .analyze-btn {
+      background: linear-gradient(135deg, #c9a84c, #a07830);
+      color: #1a1a2e;
+      border: none;
+      border-radius: 8px;
+      padding: 13px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      letter-spacing: 0.5px;
+      transition: opacity 0.2s;
+      margin-top: 6px;
+    }
+
+    .analyze-btn:hover { opacity: 0.88; }
+
+    .eligibility-badge {
+      display: none;
+      border-radius: 10px;
+      padding: 14px;
+      text-align: center;
+      font-weight: 600;
+      font-size: 14px;
+      margin-top: 4px;
+    }
+
+    .badge-high { background: #1a3a1a; color: #4caf50; border: 1px solid #4caf50; }
+    .badge-medium { background: #3a2a00; color: #ffc107; border: 1px solid #ffc107; }
+    .badge-low { background: #3a1a1a; color: #f44336; border: 1px solid #f44336; }
+
+    /* ── RIGHT PANEL — CHAT ── */
+    .chat-panel {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background: #16162a;
+    }
+
+    .chat-window {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .message {
+      max-width: 75%;
+      padding: 12px 16px;
+      border-radius: 14px;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .message.bot {
+      background: #2c2c3e;
+      border: 1px solid #c9a84c33;
+      align-self: flex-start;
+      border-bottom-left-radius: 4px;
+    }
+
+    .message.user {
+      background: linear-gradient(135deg, #c9a84c, #a07830);
+      color: #1a1a2e;
+      align-self: flex-end;
+      border-bottom-right-radius: 4px;
+      font-weight: 500;
+    }
+
+    .message .sender {
+      font-size: 11px;
+      font-weight: 700;
+      margin-bottom: 5px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      opacity: 0.7;
+    }
+
+    .typing {
+      display: none;
+      align-self: flex-start;
+      background: #2c2c3e;
+      border: 1px solid #c9a84c33;
+      border-radius: 14px;
+      border-bottom-left-radius: 4px;
+      padding: 12px 18px;
+      font-size: 13px;
+      color: #c9a84c;
+    }
+
+    /* ── CHAT INPUT ── */
+    .chat-input-area {
+      border-top: 1px solid #c9a84c33;
+      padding: 16px 24px;
+      display: flex;
+      gap: 12px;
+      background: #1a1a2e;
+    }
+
+    .chat-input-area input {
+      flex: 1;
+      background: #2c2c3e;
+      border: 1px solid #c9a84c44;
+      border-radius: 24px;
+      padding: 12px 20px;
+      color: #f0f0f0;
+      font-size: 14px;
+      outline: none;
+      transition: border 0.2s;
+    }
+
+    .chat-input-area input:focus {
+      border-color: #c9a84c;
+    }
+
+    .send-btn {
+      background: linear-gradient(135deg, #c9a84c, #a07830);
+      border: none;
+      border-radius: 50%;
+      width: 46px;
+      height: 46px;
+      cursor: pointer;
+      font-size: 18px;
+      color: #1a1a2e;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: opacity 0.2s;
+    }
+
+    .send-btn:hover { opacity: 0.85; }
+
+    .clear-btn {
+    background: transparent;
+    border: 1px solid #c9a84c44;
+    color: #c9a84c;
+     border-radius: 50%;
+    width: 46px;
+    height: 46px;
+    cursor: pointer;
+    font-size: 16px;
+    }
+    
+    .clear-btn:hover {
+    background: #c9a84c22;
+    }
+
+    .fade-out {
+    opacity: 0;
+    transform: translateY(10px);
+    transition: all 0.4s ease;
+    }
+
+    /* ── EMI MODAL ── */
+    .modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0,0,0,0.7);
+    z-index: 999;
+    justify-content: center;
+    align-items: center;
+    }
+
+    .modal-box {
+    background: #2c2c3e;
+    border: 1px solid #c9a84c;
+    border-radius: 16px;
+    padding: 32px;
+    width: 380px;
+    position: relative;
+    }
+
+    .modal-close {
+    position: absolute;
+    top: 12px; right: 16px;
+    background: transparent;
+    border: none;
+    color: #aaa;
+    font-size: 20px;
+    cursor: pointer;
+    }
+
+    .modal-close:hover {
+    color: #f0f0f0;
+    }
+
+    .modal-title {
+    color: #c9a84c;
+    margin-bottom: 20px;
+    font-size: 16px;
+    }
+
+    .modal-body {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    }
+
+    .modal-input {
+    background: #1a1a2e;
+    border: 1px solid #c9a84c55;
+    border-radius: 8px;
+    padding: 10px 14px;
+    color: #f0f0f0;
+    font-size: 14px;
+    outline: none;
+    width: 100%;
+    }
+
+    .modal-input:focus {
+    border-color: #c9a84c;
+    }
+
+    .modal-btn {
+    background: linear-gradient(135deg, #c9a84c, #a07830);
+    color: #1a1a2e;
+    border: none;
+    border-radius: 8px;
+    padding: 12px;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    margin-top: 4px;
+    width: 100%;
+    }
+
+    .modal-btn:hover {
+    opacity: 0.88;
+    }
+
+    .emi-result {
+    display: none;
+    background: #1a1a2e;
+    border: 1px solid #c9a84c44;
+    border-radius: 10px;
+    padding: 16px;
+    text-align: center;
+    }
+
+    .emi-result-label {
+    font-size: 12px;
+    color: #aaa;
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    }
+
+    .emi-result-amount {
+    font-size: 28px;
+    font-weight: 700;
+    color: #c9a84c;
+    }
+
+    .emi-result-details {
+    font-size: 12px;
+    color: #aaa;
+    margin-top: 8px;
+    line-height: 1.8;
+    }
+
+    .header-btn {
+    margin-left: auto;
+    background: transparent;
+    border: 1px solid #c9a84c;
+    color: #c9a84c;
+    padding: 8px 18px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 13px;
+    letter-spacing: 0.5px;
+    transition: background 0.2s;
+    }
+
+    .header-btn:hover {
+    background: #c9a84c22;
+    }
+    /* ── LOAN COMPARISON MODAL ── */
+.compare-modal-box {
+  background: #2c2c3e;
+  border: 1px solid #c9a84c;
+  border-radius: 16px;
+  padding: 32px;
+  width: 750px;
+  max-width: 95vw;
+  max-height: 85vh;
+  overflow-y: auto;
+  position: relative;
+}
+
+.compare-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 16px;
+  font-size: 13px;
+}
+
+.compare-table th {
+  background: #1a1a2e;
+  color: #c9a84c;
+  padding: 12px 10px;
+  text-align: left;
+  border-bottom: 2px solid #c9a84c44;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.compare-table td {
+  padding: 11px 10px;
+  border-bottom: 1px solid #c9a84c22;
+  color: #f0f0f0;
+  vertical-align: middle;
+}
+
+.compare-table tr:hover td {
+  background: #1a1a2e;
+}
+
+.recommended-row td {
+  background: #1a3a1a !important;
+  color: #4caf50;
+}
+
+.recommended-badge {
+  background: #4caf50;
+  color: #fff;
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  margin-left: 6px;
+  font-weight: 700;
+}
+
+.compare-subtitle {
+  font-size: 12px;
+  color: #aaa;
+  margin-top: 4px;
+}
+
+    /* ── SCROLLBAR ── */
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #c9a84c44; border-radius: 10px; }
+  </style>
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header>
+    <div class="logo">💰</div>
+    <div>
+      <h1>LoanAdvisor AI</h1>
+      <p>Powered by Gemini · Real-Time Loan Eligibility Analysis</p>
+    </div>
+    <button onclick="toggleEMIModal()" class="header-btn">📊 EMI Calculator
+    </button>
+    <button onclick="toggleCompareModal()" class="header-btn">📋 Compare Loans</button>
+  </header>
+  
+  <div class="main">
+
+    <!-- LEFT PANEL — FORM -->
+    <div class="form-panel">
+      <h2>📋 Your Financial Profile</h2>
+
+      <div class="form-group">
+        <label>Full Name</label>
+        <input type="text" id="name" placeholder="e.g. Rahul Sharma" />
+      </div>
+
+      <div class="form-group">
+        <label>Age</label>
+        <input type="number" id="age" placeholder="e.g. 28" min="18" max="65" />
+      </div>
+
+      <div class="form-group">
+        <label>Monthly Income (₹)</label>
+        <input type="number" id="income" placeholder="e.g. 50000" />
+      </div>
+
+      <div class="form-group">
+        <label>Credit Score (300–900)</label>
+        <input type="number" id="credit" placeholder="e.g. 750" min="300" max="900" />
+      </div>
+
+      <div class="form-group">
+        <label>Existing Monthly EMIs (₹)</label>
+        <input type="number" id="emi" placeholder="e.g. 5000 (0 if none)" />
+      </div>
+
+      <div class="form-group">
+        <label>Employment Type</label>
+        <select id="employment">
+          <option value="">Select...</option>
+          <option value="Salaried">Salaried</option>
+          <option value="Self-Employed">Self-Employed</option>
+          <option value="Business Owner">Business Owner</option>
+          <option value="Student">Student</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Loan Purpose</label>
+        <select id="purpose">
+          <option value="">Select...</option>
+          <option value="Home Loan">Home Loan</option>
+          <option value="Personal Loan">Personal Loan</option>
+          <option value="Car Loan">Car Loan</option>
+          <option value="Education Loan">Education Loan</option>
+          <option value="Business Loan">Business Loan</option>
+        </select>
+      </div>
+
+      <button class="analyze-btn" onclick="analyzeProfile()">
+        🔍 Analyze My Eligibility
+      </button>
+
+      <div class="eligibility-badge" id="badge"></div>
+    </div>
+
+    <!-- RIGHT PANEL — CHAT -->
+    <div class="chat-panel">
+      <div class="chat-window" id="chatWindow">
+
+        <div class="message bot">
+          <div class="sender">LoanAdvisor AI</div>
+          Welcome! I'm your personal Loan Eligibility Advisor. 👋<br><br>
+          Please fill in your financial details on the left and click
+          <strong>"Analyze My Eligibility"</strong> to get started —
+          or simply type your loan-related question below.
+        </div>
+          <!-- <div class="typing" id="typing">⏳ Processing<span id="dots"></span></div> -->
+      </div>
+          <div class="typing" id="typing">⏳ Processing<span id="dots"></span></div>
+
+      <!-- <div class="typing" id="typing">⏳ Analyzing your profile...</div> -->
+    
+      <div class="chat-input-area">
+            <button onclick="clearChat()" class="clear-btn">🗑</button>
+        <input
+          type="text"
+          id="userInput"
+          placeholder="Ask me anything about loans..."
+          onkeypress="if(event.key==='Enter') sendMessage()"
+        />
+        <button class="send-btn" onclick="sendMessage()">➤</button>
+      </div>
+    </div>
+
+  </div>
+  <!-- EMI CALCULATOR MODAL -->
+<div id="emiModal" class="modal-overlay">
+  <div class="modal-box">
+
+    <button onclick="toggleEMIModal()" class="modal-close">✕</button>
+    <h2 class="modal-title">📊 EMI Calculator</h2>
+
+    <div class="modal-body">
+
+      <div class="form-group">
+        <label>Loan Amount (₹)</label>
+        <input type="number" id="emiAmount"
+          placeholder="e.g. 500000" class="modal-input" />
+      </div>
+
+      <div class="form-group">
+        <label>Annual Interest Rate (%)</label>
+        <input type="number" id="emiRate"
+          placeholder="e.g. 10.5" class="modal-input" />
+      </div>
+
+      <div class="form-group">
+        <label>Tenure (Years)</label>
+        <input type="number" id="emiTenure"
+          placeholder="e.g. 5" class="modal-input" />
+      </div>
+
+      <button onclick="calculateEMIModal()" class="modal-btn">
+        Calculate EMI
+      </button>
+
+      <div id="emiResult" class="emi-result">
+        <div class="emi-result-label">Monthly EMI</div>
+        <div id="emiResultAmount" class="emi-result-amount"></div>
+        <div id="emiResultDetails" class="emi-result-details"></div>
+      </div>
+
+    </div>
+  </div>
+</div>
+<!-- LOAN COMPARISON MODAL -->
+<div id="compareModal" class="modal-overlay">
+  <div class="compare-modal-box">
+
+    <button onclick="toggleCompareModal()" class="modal-close">✕</button>
+    <h2 class="modal-title">📋 Loan Comparison Table</h2>
+    <p class="compare-subtitle" id="compareSubtitle">
+      General loan options available in India
+    </p>
+
+    <table class="compare-table" id="compareTable">
+      <thead>
+        <tr>
+          <th>Loan Type</th>
+          <th>Interest Rate</th>
+          <th>Max Amount</th>
+          <th>Max Tenure</th>
+          <th>Best For</th>
+          <th>Eligibility</th>
+        </tr>
+      </thead>
+      <tbody id="compareTableBody">
+      </tbody>
+    </table>
+
+  </div>
+</div>
+
+  <script>
+    let lastIncome = 0;
+    let lastCredit = 0;
+
+    function formatCurrency(amount) {
+        return "₹" + Number(amount).toLocaleString('en-IN');
+    }
+
+    // ── ELIGIBILITY ENGINE (Rule-based, non-AI) ──
+    function calculateEligibility(income, credit, emi) {
+      const debtRatio = emi / income;
+      if (credit >= 750 && income >= 40000 && debtRatio < 0.4) return "High";
+      if (credit >= 650 && income >= 25000 && debtRatio < 0.5) return "Medium";
+      return "Low";
+    }
+
+    // ── ANALYZE PROFILE BUTTON ──
+    function analyzeProfile() {
+      const name = document.getElementById('name').value || "the user";
+      const age = document.getElementById('age').value;
+      const income = parseFloat(document.getElementById('income').value) || 0;
+      const credit = parseFloat(document.getElementById('credit').value) || 0;
+      const emi = parseFloat(document.getElementById('emi').value) || 0;
+      const employment = document.getElementById('employment').value;
+      const purpose = document.getElementById('purpose').value;
+
+    //   if (!income || !credit) {
+    //     alert("Please enter at least your Monthly Income and Credit Score.");
+    //     return;
+    //   }
+      // ✅ Strong validation
+        if (!income || !credit) {
+            alert("Please enter Monthly Income and Credit Score.");
+        return;
+        }
+
+    if (income <= 0) {
+        alert("Income must be greater than 0.");
+        return;
+        }
+
+    if (credit < 300 || credit > 900) {
+        alert("Credit score must be between 300 and 900.");
+        return;
+        }
+
+    if (age && (age < 18 || age > 65)) {
+        alert("Age must be between 18 and 65.");
+        return;
+        }
+
+      const eligibility = calculateEligibility(income, credit, emi);
+      // ✅ Explainable logic
+        let reason = "";
+
+        if (credit >= 750 && income >= 40000 && (emi / income) < 0.4) {
+            reason = "Strong credit score, high income, and low existing debt.";
+        } else if (credit >= 650 && income >= 25000) {
+             reason = "Moderate credit profile with manageable income.";
+        } else {
+            reason = "Low credit score or high debt ratio affecting eligibility.";
+        }
+
+      // Show badge
+      const badge = document.getElementById('badge');
+      badge.style.display = 'block';
+      badge.className = 'eligibility-badge';
+
+        if (eligibility === "High") {
+            badge.classList.add('badge-high');
+            badge.innerHTML = `✅ High Eligibility <br><small>${reason}</small><br>
+            <small>Income: ${formatCurrency(income)}</small>`;
+        } else if (eligibility === "Medium") {
+            badge.classList.add('badge-medium');
+            badge.innerHTML = `⚠️ Medium Eligibility <br><small>${reason}</small>`;
+        } else {
+            badge.classList.add('badge-low');
+            badge.innerHTML = `❌ Low Eligibility <br><small>${reason}</small>`;
+        }
+
+      
+
+      // Build message for AI
+      const profileMessage = `My name is ${name}. Age: ${age}. 
+        Monthly income: ${formatCurrency(income)}. Credit score: ${credit}. 
+        Existing EMIs: ${formatCurrency(emi)}. Employment: ${employment}. 
+        Loan purpose: ${purpose}. 
+        My eligibility is pre-calculated as: ${eligibility}.
+        Please analyze my profile and suggest suitable loan options with amounts and interest rates.`;
+        lastIncome = income;
+        lastCredit = credit;
+        renderCompareTable(income, credit);
+        sendMessage(profileMessage);
+    }
+
+    // ── SEND MESSAGE ──
+    async function sendMessage(customMessage = null) {
+      const input = document.getElementById('userInput');
+      const message = customMessage || input.value.trim();
+      if (!message) return;
+
+      // Show user message
+      if (!customMessage) {
+        appendMessage('user', message);
+        input.value = '';
+      } else {
+        appendMessage('user', '🔍 Analyzing my financial profile...');
+      }
+
+      // Show typing indicator
+      const typing = document.getElementById('typing');
+      typing.style.display = 'block';
+      scrollToBottom();
+
+
+        try {
+        // ✅ MOVE variables here (before fetch)
+            const income = document.getElementById('income').value;
+            const credit = document.getElementById('credit').value;
+
+        const response = await fetch('/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+            message: message,
+            income: income,
+            credit: credit
+        })
+    });
+    
+
+        const data = await response.json();
+        typing.style.display = 'none';
+        appendMessage('bot', data.reply);
+      } catch (error) {
+        typing.style.display = 'none';
+        appendMessage('bot', '⚠️ Something went wrong. Please try again.');
+      }
+
+      scrollToBottom();
+    }
+
+    // ── HELPERS ──
+    function appendMessage(sender, text) {
+      const chatWindow = document.getElementById('chatWindow');
+      const div = document.createElement('div');
+      div.className = `message ${sender}`;
+      div.innerHTML = `
+        <div class="sender">${sender === 'bot' ? 'LoanAdvisor AI' : 'You'}</div>
+          ${sender === 'bot' ? formatMarkdown(text) : text}
+      `;
+      chatWindow.appendChild(div);
+      scrollToBottom();
+    }
+
+    function scrollToBottom() {
+      const chatWindow = document.getElementById('chatWindow');
+      chatWindow.scrollTop = chatWindow.scrollHeight;
+    }
+    // Animated dots
+    setInterval(() => {
+        const dots = document.getElementById("dots");
+        if (!dots) return;
+        dots.textContent = dots.textContent.length >= 3 ? "" : dots.textContent + ".";
+        }, 500);
+
+
+    function clearChat() {
+    const chatWindow = document.getElementById("chatWindow");
+
+    // Apply fade-out to all messages
+    const messages = chatWindow.querySelectorAll('.message, .typing');
+    messages.forEach(msg => {
+        msg.classList.add('fade-out');
+    });
+
+    // Wait for animation to complete
+    setTimeout(() => {
+        chatWindow.innerHTML = "";
+
+        // Add fresh welcome message
+        appendMessage('bot', 'Chat cleared. How can I assist you again?');
+
+        // Recreate typing indicator
+        const typingDiv = document.createElement('div');
+        typingDiv.className = 'typing';
+        typingDiv.id = 'typing';
+        typingDiv.innerHTML = '⏳ Processing<span id="dots"></span>';
+        chatWindow.appendChild(typingDiv);
+
+        fetch('/clear_chat', { method: 'POST' });
+
+    }, 400); // matches CSS duration
+    }
+    
+    function formatMarkdown(text) {
+    text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+    text = text.replace(/\*(.*?)\*/g , '<em>$1</em>');
+    text = text.replace(/^\* (.+)/gm, '• $1');
+    text = text.replace(/###.*?\n/g, '');
+    text = text.replace(/---/g, '');
+    text = text.replace(/\n/g, '<br>');
+    return text;
+}
+function toggleEMIModal() {
+    const modal = document.getElementById('emiModal');
+    if (modal.style.display === 'flex') {
+        modal.style.display = 'none';
+    } else {
+        modal.style.display = 'flex';
+        document.getElementById('emiResult').style.display = 'none';
+        document.getElementById('emiAmount').value = '';
+        document.getElementById('emiRate').value = '';
+        document.getElementById('emiTenure').value = '';
+    }
+}
+
+function calculateEMIModal() {
+    const P = parseFloat(document.getElementById('emiAmount').value);
+    const r = parseFloat(document.getElementById('emiRate').value);
+    const n = parseFloat(document.getElementById('emiTenure').value);
+
+    if (!P || !r || !n) {
+        alert("Please fill all fields.");
+        return;
+    }
+
+    if (P <= 0 || r <= 0 || n <= 0) {
+        alert("All values must be greater than 0.");
+        return;
+    }
+
+    const monthlyRate = r / (12 * 100);
+    const months = n * 12;
+    const emi = (P * monthlyRate * Math.pow(1 + monthlyRate, months)) /
+                (Math.pow(1 + monthlyRate, months) - 1);
+
+    const totalPayment = emi * months;
+    const totalInterest = totalPayment - P;
+
+    document.getElementById('emiResult').style.display = 'block';
+    document.getElementById('emiResultAmount').textContent =
+        '₹' + emi.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,');
+    document.getElementById('emiResultDetails').innerHTML =
+        `Total Payment: ₹${totalPayment.toFixed(0).replace(/\d(?=(\d{3})+$)/g, '$&,')}<br>
+         Total Interest: ₹${totalInterest.toFixed(0).replace(/\d(?=(\d{3})+$)/g, '$&,')}`;
+}
+// ── LOAN DATA ──
+const loanData = [
+  {
+    type: "Home Loan",
+    rate: "8% – 9.5%",
+    maxAmount: "₹1 Crore+",
+    tenure: "30 years",
+    bestFor: "Property purchase",
+    minIncome: 25000,
+    minCredit: 700
+  },
+  {
+    type: "Personal Loan",
+    rate: "10% – 24%",
+    maxAmount: "₹10 Lakhs",
+    tenure: "5 years",
+    bestFor: "Emergency/Medical",
+    minIncome: 20000,
+    minCredit: 650
+  },
+  {
+    type: "Car Loan",
+    rate: "7% – 12%",
+    maxAmount: "₹20 Lakhs",
+    tenure: "7 years",
+    bestFor: "Vehicle purchase",
+    minIncome: 20000,
+    minCredit: 650
+  },
+  {
+    type: "Education Loan",
+    rate: "8% – 15%",
+    maxAmount: "₹20 Lakhs",
+    tenure: "15 years",
+    bestFor: "Higher education",
+    minIncome: 15000,
+    minCredit: 600
+  },
+  {
+    type: "Business Loan",
+    rate: "12% – 24%",
+    maxAmount: "₹50 Lakhs",
+    tenure: "10 years",
+    bestFor: "Business expansion",
+    minIncome: 30000,
+    minCredit: 680
+  }
+];
+function toggleCompareModal() {
+  const modal = document.getElementById('compareModal');
+  if (modal.style.display === 'flex') {
+    modal.style.display = 'none';
+  } else {
+    modal.style.display = 'flex';
+    renderCompareTable(lastIncome, lastCredit);
+  }
+}
+
+
+function renderCompareTable(userIncome = 0, userCredit = 0) {
+  const tbody = document.getElementById('compareTableBody');
+  const subtitle = document.getElementById('compareSubtitle');
+  tbody.innerHTML = '';
+
+  const hasProfile = userIncome > 0 && userCredit > 0;
+
+  if (hasProfile) {
+    subtitle.textContent =
+      `Personalized recommendations based on your profile
+       (Income: ₹${Number(userIncome).toLocaleString('en-IN')},
+       Credit: ${userCredit})`;
+  } else {
+    subtitle.textContent = 'General loan options available in India';
+  }
+
+  loanData.forEach(loan => {
+    const tr = document.createElement('tr');
+    let eligibilityText = '—';
+    let isRecommended = false;
+
+    if (hasProfile) {
+      const incomeOk = userIncome >= loan.minIncome;
+      const creditOk = userCredit >= loan.minCredit;
+
+      if (incomeOk && creditOk) {
+        eligibilityText = '✅ Eligible';
+        isRecommended = true;
+      } else if (!incomeOk && !creditOk) {
+        eligibilityText = '❌ Not Eligible';
+      } else if (!creditOk) {
+        eligibilityText = '⚠️ Low Credit';
+      } else {
+        eligibilityText = '⚠️ Low Income';
+      }
+    }
+
+    if (isRecommended) tr.classList.add('recommended-row');
+
+    tr.innerHTML = `
+      <td>
+        ${loan.type}
+        ${isRecommended ? '<span class="recommended-badge">✓ Recommended</span>' : ''}
+      </td>
+      <td>${loan.rate}</td>
+      <td>${loan.maxAmount}</td>
+      <td>${loan.tenure}</td>
+      <td>${loan.bestFor}</td>
+      <td>${eligibilityText}</td>
+    `;
+
+    tbody.appendChild(tr);
+  });
+}
+
+  </script>
+
+</body>
+</html>
