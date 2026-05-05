@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Login</title>
+    <link rel="stylesheet" href="/static/login.css">
+</head>
+<body>
+
+<div class="login-container">
+
+    <div class="login-title">
+        <h1>Loan AI Assistant</h1>
+        <p>Secure Login</p>
+    </div>
+
+    <!-- LOGIN FORM -->
+    <form class="login-form" method="POST" action="/login">
+        <input type="email" name="email" placeholder="Email" required>
+        <input type="password" name="password" placeholder="Password" required>
+        <button class="login-btn" type="submit">Login</button>
+    </form>
+
+    <div class="switch-text">
+        New user? <span onclick="toggleForm()">Register</span>
+    </div>
+
+    <!-- REGISTER FORM -->
+    <form class="login-form" method="POST" action="/register" id="registerForm" style="display:none;">
+        <input type="email" name="email" placeholder="Email" required>
+        <input type="password" name="password" placeholder="Password" required>
+        <button class="login-btn" type="submit">Register</button>
+    </form>
+
+</div>
+
+<script>
+function toggleForm() {
+    const form = document.getElementById("registerForm");
+    form.style.display = form.style.display === "none" ? "flex" : "none";
+}
+</script>
+
+</body>
+</html>
